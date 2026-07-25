@@ -120,6 +120,7 @@ export default function TablePage() {
     : undefined;
   const yourSelection = table.recommendation?.selections.find((s) => s.dinerId === you);
   const yourDish = restaurant?.menu.find((d) => d.id === yourSelection?.dishId) ?? null;
+  const missingDiners = allDiners.filter((d) => !table.seatedDinerIds.includes(d.id));
 
   return (
     <main>
@@ -190,9 +191,10 @@ export default function TablePage() {
               />
             )}
 
-            {!table.seatedDinerIds.includes("priya") && (
+            {!table.approved && missingDiners.length > 0 && (
               <p className="inlineHint">
-                Waiting for Priya to join — share the table link above with her.
+                Waiting for {missingDiners.map((d) => d.name).join(", ")} to join — share the
+                table link above with them.
               </p>
             )}
 
@@ -200,18 +202,16 @@ export default function TablePage() {
 
             {!table.approved && (
               <div className="actionRow">
-                {you === "jordan" &&
-                  table.seatedDinerIds.includes("priya") &&
-                  !table.revision && (
-                    <button
-                      type="button"
-                      className="secondaryButton"
-                      onClick={correctJordanBelief}
-                      disabled={busy}
-                    >
-                      Correct my belief to shellfish allergy
-                    </button>
-                  )}
+                {you === "jordan" && !table.revision && (
+                  <button
+                    type="button"
+                    className="secondaryButton"
+                    onClick={correctJordanBelief}
+                    disabled={busy}
+                  >
+                    Correct my belief to shellfish allergy
+                  </button>
+                )}
                 <button
                   type="button"
                   className="primaryButton"

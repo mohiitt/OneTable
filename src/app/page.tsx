@@ -52,8 +52,9 @@ export default function Home() {
           <h1>One table. Current beliefs. One order.</h1>
           <p>
             OneTable recalls each diner&apos;s active constraints before it
-            negotiates. Create a table, then share the link so Alex, Sam,
-            Jordan, and Priya can each join from their own device.
+            negotiates. Create a table, join as whichever diner you are, then
+            share the link with whoever else you want at the table — the
+            order rebalances every time someone new joins.
           </p>
         </div>
 
@@ -95,8 +96,9 @@ export default function Home() {
               {creating ? "Creating…" : "Create table"}
             </button>
             <p className="inlineHint">
-              Creates a table for Alex, Sam, and Jordan, and gives you a link to
-              share with Priya so she can join from her own device.
+              Creates an empty table and gives you a link. You&apos;ll pick who you
+              are first, then share the link with anyone else you want at the
+              table.
             </p>
           </div>
         </section>
