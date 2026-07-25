@@ -35,6 +35,12 @@ import {
  * Alex/Sam/Jordan/Priya cast whose beliefs and meal history are meant to
  * persist across separate sittings — that is what makes group history and
  * the fresh-session proof genuine rather than reset-per-link.
+ *
+ * A table starts with nobody seated. Whoever creates it shares the link and
+ * joins like everyone else via the identity picker — there is no hardcoded
+ * "these three start seated, this one joins later." Any diner joining after
+ * the first triggers the same rebalance path; the first diner to join just
+ * establishes the initial recommendation.
  */
 
 const GROUP_ID = "demo-group";
@@ -156,8 +162,8 @@ export function createTable(intent: string): TableState {
   const table: TableState = {
     id,
     intent,
-    seatedDinerIds: ["alex", "sam", "jordan"],
-    phase: "recalling",
+    seatedDinerIds: [],
+    phase: "idle",
     recommendation: null,
     previousRecommendation: null,
     revision: null,
@@ -172,21 +178,17 @@ export function createTable(intent: string): TableState {
     updatedAt: Date.now(),
   };
   tables.set(id, table);
-
-  schedule(id, 600, (t) => {
-    t.phase = "negotiating";
-  });
-  scheduleAsync(id, 1300, (t) => runRebalance(t));
-
   return table;
 }
 
 /**
  * A diner opens the shared link and claims their seat. Idempotent for
- * diners already seated. Any join that happens after a recommendation
- * already exists triggers the same rebalance path used for a belief
- * revision — there is nothing Priya-specific about it now that a real
- * engine computes the recommendation for whichever diners are seated.
+ * diners already seated. The first diner to join establishes the initial
+ * recommendation (recall/negotiate timing); every diner after that
+ * triggers the same rebalance path used for a belief revision — there is
+ * nothing hardcoded about who starts seated or who joins later. Whoever
+ * creates the table, and whoever they invite, in whatever order, all go
+ * through this one path.
  */
 export function joinTable(id: string, dinerId: string): TableState | null {
   const table = tables.get(id);
@@ -195,11 +197,17 @@ export function joinTable(id: string, dinerId: string): TableState | null {
   if (!ALL_DINER_IDS.includes(dinerId)) return table;
   if (table.seatedDinerIds.includes(dinerId)) return table;
 
-  const shouldRebalance = table.recommendation !== null;
+  const isFirstDiner = table.seatedDinerIds.length === 0;
   table.seatedDinerIds = [...table.seatedDinerIds, dinerId];
   table.updatedAt = Date.now();
 
-  if (shouldRebalance) {
+  if (isFirstDiner) {
+    table.phase = "recalling";
+    schedule(id, 600, (t) => {
+      t.phase = "negotiating";
+    });
+    scheduleAsync(id, 1300, (t) => runRebalance(t));
+  } else {
     table.phase = "recalling";
     schedule(id, 400, (t) => {
       t.phase = "rebalancing";
